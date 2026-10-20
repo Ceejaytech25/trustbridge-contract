@@ -60,6 +60,9 @@ jobs:
       - name: Check event topics
         run: ./scripts/check_event_topics.sh
 
+      - name: Check subgraph event parity
+        run: make subgraph-parity
+
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
