@@ -212,7 +212,7 @@ impl Consumer {
             ("removed_event", "octocat") => self.address = None,
             // Envelope-only model: record non-registry events by type and stable ID.
             // Their domain-specific state is handled by downstream projections.
-            _ => {},
+            _ => {}
         }
     }
 }
@@ -253,7 +253,10 @@ fn event_replay_is_idempotent() {
     assert_eq!(twice.verified, once.verified);
     assert_eq!(twice.per_type, once.per_type);
     for event_type in EVENT_TYPES {
-        assert!(once.per_type.contains_key(*event_type), "missing delivery for {event_type}");
+        assert!(
+            once.per_type.contains_key(*event_type),
+            "missing delivery for {event_type}"
+        );
     }
 }
 
@@ -263,16 +266,30 @@ fn event_ids_match_the_language_neutral_fixture() {
     let deliveries = deliveries();
     let from_json = |field: &str| -> Vec<String> {
         let prefix = format!("\"{field}\": \"");
-        fixture.split(&prefix).skip(1)
-            .map(|s| s.split('"').next().unwrap().to_string()).collect()
+        fixture
+            .split(&prefix)
+            .skip(1)
+            .map(|s| s.split('"').next().unwrap().to_string())
+            .collect()
     };
     let ids = from_json("event_id");
     let types = from_json("event_type");
-    assert_eq!(ids.len(), deliveries.len(), "JSON/Rust delivery counts differ");
-    assert_eq!(types.len(), deliveries.len(), "JSON/Rust type counts differ");
+    assert_eq!(
+        ids.len(),
+        deliveries.len(),
+        "JSON/Rust delivery counts differ"
+    );
+    assert_eq!(
+        types.len(),
+        deliveries.len(),
+        "JSON/Rust type counts differ"
+    );
     for (i, d) in deliveries.iter().enumerate() {
         assert_eq!(ids[i], event_id(d), "JSON/Rust ID mismatch at delivery {i}");
-        assert_eq!(types[i], d.event_type, "JSON/Rust event mismatch at delivery {i}");
+        assert_eq!(
+            types[i], d.event_type,
+            "JSON/Rust event mismatch at delivery {i}"
+        );
     }
 }
 
@@ -282,13 +299,17 @@ fn every_contractevent_has_replay_coverage() {
     let mut source_types = Vec::new();
     let mut pending = false;
     for line in source.lines() {
-        if line.trim() == "#[contractevent]" { pending = true; }
+        if line.trim() == "#[contractevent]" {
+            pending = true;
+        }
         if pending {
             if let Some(name) = line.trim().strip_prefix("pub struct ") {
                 let name = name.split_whitespace().next().unwrap();
                 let mut topic = String::new();
                 for (i, ch) in name.chars().enumerate() {
-                    if ch.is_ascii_uppercase() && i > 0 { topic.push('_'); }
+                    if ch.is_ascii_uppercase() && i > 0 {
+                        topic.push('_');
+                    }
                     topic.push(ch.to_ascii_lowercase());
                 }
                 source_types.push(topic);
@@ -297,12 +318,22 @@ fn every_contractevent_has_replay_coverage() {
         }
     }
     let documented: std::collections::HashSet<_> = EVENT_TYPES.iter().copied().collect();
-    let discovered: std::collections::HashSet<_> = source_types.iter().map(String::as_str).collect();
-    assert_eq!(documented, discovered, "update the replay fixture for every new #[contractevent]");
+    let discovered: std::collections::HashSet<_> =
+        source_types.iter().map(String::as_str).collect();
+    assert_eq!(
+        documented, discovered,
+        "update the replay fixture for every new #[contractevent]"
+    );
     assert_eq!(documented.len(), EVENT_TYPES.len(), "duplicate event types");
     // A distinct applied delivery and an exact replay exist for each topic.
     for name in EVENT_TYPES {
-        assert!(deliveries().iter().filter(|d| d.event_type == *name).count() >= 2,
-            "missing original/replay pair for {name}");
+        assert!(
+            deliveries()
+                .iter()
+                .filter(|d| d.event_type == *name)
+                .count()
+                >= 2,
+            "missing original/replay pair for {name}"
+        );
     }
 }
