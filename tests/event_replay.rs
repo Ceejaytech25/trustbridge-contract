@@ -262,7 +262,7 @@ fn event_ids_match_the_language_neutral_fixture() {
     let fixture = include_str!("testdata/event_replay_fixture.json");
     let deliveries = deliveries();
     let from_json = |field: &str| -> Vec<String> {
-        let prefix = format!("\\\"{field}\\\": \\\"");
+        let prefix = format!("\"{field}\": \"");
         fixture.split(&prefix).skip(1)
             .map(|s| s.split('"').next().unwrap().to_string()).collect()
     };
