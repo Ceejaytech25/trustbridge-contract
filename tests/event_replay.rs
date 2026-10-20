@@ -253,7 +253,7 @@ fn event_replay_is_idempotent() {
     assert_eq!(twice.verified, once.verified);
     assert_eq!(twice.per_type, once.per_type);
     for event_type in EVENT_TYPES {
-        assert!(once.per_type.contains_key(event_type), "missing delivery for {event_type}");
+        assert!(once.per_type.contains_key(*event_type), "missing delivery for {event_type}");
     }
 }
 
