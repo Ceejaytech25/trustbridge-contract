@@ -4,6 +4,34 @@ This document tracks the stable ABI surface exposed by the TrustBridge contract,
 including storage layout versions and field ordering that external consumers
 (notably dashboard export consumers) depend on.
 
+## Staged WASM entrypoints (Issue #594)
+
+The **canonical exported Soroban function names** are defined by the
+`#[contractimpl]` on `TrustBridgeContract` in [`src/lib.rs`](../src/lib.rs).
+Use these exact names after `--` in `stellar contract invoke` and in
+[`tests/auth_matrix.csv`](../tests/auth_matrix.csv):
+
+| Exported function | Rust signature (excluding `env: Env`) | Authorization |
+|---|---|---|
+| `stage_wasm` | `stage_wasm(caller: Address, wasm_hash: BytesN<32>) -> Result<(), ContractError>` | Admin or `Role::Upgrader`; caller must sign |
+| `get_staged` | `get_staged() -> Option<StagedWasm>` | Public read; no auth |
+| `clear_staged` | `clear_staged(caller: Address) -> Result<(), ContractError>` | Admin only; caller must sign |
+
+`StagedWasm` contains `wasm_hash: BytesN<32>`, `staged_by: Address`,
+and `staged_at: u64`. A new `stage_wasm` replaces the slot; `clear_staged`
+succeeds even when the slot is empty. While a hash is staged,
+`execute_upgrade` rejects a different hash with `StagedWasmMismatch`.
+See the [operator commands](ADMIN_RUNBOOK.md#staged-wasm-cli-recipes)
+and [security rules](SECURITY.md#staged-wasm-slot-issue-300).
+
+**Names that are not ABI entrypoints:** `get_staged_wasm`,
+`set_staged_wasm`, and `clear_staged_wasm` are internal storage
+helpers in [`src/staged_wasm.rs`](../src/staged_wasm.rs), not CLI
+functions. `commit_staged_wasm` is **not exported** and has no
+backward-compatibility alias; clients using that old name must migrate
+to the documented staging/upgrade flow. Do not substitute
+`clear_staged_wasm` for `clear_staged` in a contract invocation.
+
 ## export_page layout
 
 The `export_page` storage encoding is versioned and pinned by a golden layout
