@@ -253,7 +253,6 @@ fn generate_xdr_fixtures() {
     // This avoids invoking update_current_contract_wasm in a fixture test.
     let hash = soroban_sdk::BytesN::from_array(&env, &[0xAB; 32]);
     env.as_contract(&contract_id, || {
-        use soroban_sdk::contractevent::ContractEvent as _;
         use trustbridge_contract::{
             EventDomain, RoleGrantedEvent, RoleRevokedEvent, UpgradedEvent,
             UpgradeApprovedEvent, UpgradeProposedEvent,
