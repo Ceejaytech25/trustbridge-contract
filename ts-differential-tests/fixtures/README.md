@@ -8,7 +8,7 @@ new required field was added without updating the bindings.
 ## Generating Fixtures
 
 ```bash
-# From the repo root — builds and runs the generator, then writes every fixture:
+# From the repo root — builds and runs the generator (prints marked blocks):
 make xdr-fixtures
 
 # Manually (output goes to stdout; paste each block into the matching file):
@@ -17,7 +17,7 @@ cargo test generate_xdr_fixtures -- --ignored --nocapture
 
 The generator test is in `tests/generate_xdr_fixtures.rs`. It prints clearly
 delimited blocks for each fixture; the Makefile target parses those blocks and
-writes the files automatically.
+prints the fixture blocks for copying into the matching files.
 
 ## Fixture Files
 
@@ -91,7 +91,7 @@ run.
 1. Add the generation logic to `tests/generate_xdr_fixtures.rs` — use `print_fixture()` or follow the `get_address_octocat` pattern.
 2. Add a placeholder `.xdr` and `.meta.json` (or `.address`) file here.
 3. Add a test case to `ts-differential-tests/fixtures.test.js`.
-4. Run `make xdr-fixtures` to populate the files.
+4. Run `make xdr-fixtures` and copy each emitted block into the matching file.
 5. Commit the generated fixtures together with the Rust and TS changes.
 
 ### Upgrade, RBAC and multisig event payloads (Issue #599)
