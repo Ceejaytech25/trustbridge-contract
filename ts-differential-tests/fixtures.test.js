@@ -76,14 +76,14 @@ for (const name of eventFixtureNames) {
     const fields = decodeEventData(encoded);
     assert.equal(fields.timestamp, 'scvU64');
     if (name === 'upgraded_event') {
-      assert.equal(fields.new_wasm_hash, 'scvBytes');
+      assert.equal(fields.new_wasm_hash, undefined); // #[topic] field
       assert.equal(fields.domain, 'scvMap');
     } else if (name.startsWith('role_')) {
-      assert.equal(fields.address, 'scvAddress');
+      assert.equal(fields.address, undefined); // #[topic] field
       assert.equal(fields.admin, 'scvAddress');
       if (name === 'role_granted_event') assert.equal(fields.role, 'scvU32');
     } else {
-      assert.equal(fields.proposal_id, 'scvU32');
+      assert.equal(fields.proposal_id, undefined); // #[topic] field
       if (name === 'upgrade_approved_event' || name === 'upgrade_proposal_executed_event') {
         assert.equal(fields.approval_count, 'scvU32');
       }
