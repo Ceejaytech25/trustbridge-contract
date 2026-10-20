@@ -108,10 +108,10 @@ fn deliveries() -> Vec<Delivery> {
         // 6. genuine re-registration in a later ledger
         Delivery { event_type: "registered_event", github_username: "octocat", stellar_address: addr_b, ledger_sequence: 1_002_000, tx_hash: tx4, event_index: 0 },
         // One distinct envelope for every contract event type.
-        Delivery { event_type: "registered_event", github_username: "octocat", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 1 },
-        Delivery { event_type: "bot_status_changed_event", github_username: "octocat", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 2 },
-        Delivery { event_type: "removed_event", github_username: "octocat", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 3 },
-        Delivery { event_type: "verified_event", github_username: "octocat", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 4 },
+        Delivery { event_type: "registered_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 1 },
+        Delivery { event_type: "bot_status_changed_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 2 },
+        Delivery { event_type: "removed_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 3 },
+        Delivery { event_type: "verified_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 4 },
         Delivery { event_type: "verification_revoked_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 5 },
         Delivery { event_type: "upgraded_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 6 },
         Delivery { event_type: "paused_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 7 },
@@ -122,9 +122,9 @@ fn deliveries() -> Vec<Delivery> {
         Delivery { event_type: "role_grant_pending_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 12 },
         Delivery { event_type: "role_grant_cancelled_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 13 },
         Delivery { event_type: "renamed_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 14 },
-        Delivery { event_type: "rotation_requested_event", github_username: "octocat", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 15 },
-        Delivery { event_type: "rotation_executed_event", github_username: "octocat", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 16 },
-        Delivery { event_type: "rotation_cancelled_event", github_username: "octocat", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 17 },
+        Delivery { event_type: "rotation_requested_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 15 },
+        Delivery { event_type: "rotation_executed_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 16 },
+        Delivery { event_type: "rotation_cancelled_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 17 },
         Delivery { event_type: "wasm_staged_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 18 },
         Delivery { event_type: "upgrade_attested_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 19 },
         Delivery { event_type: "attestation_cleared_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 20 },
@@ -133,9 +133,9 @@ fn deliveries() -> Vec<Delivery> {
         Delivery { event_type: "batch_remove_proposed_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 23 },
         Delivery { event_type: "batch_remove_executed_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 24 },
         Delivery { event_type: "batch_remove_cancelled_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 25 },
-        Delivery { event_type: "challenge_started_event", github_username: "octocat", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 26 },
-        Delivery { event_type: "challenge_cancelled_event", github_username: "octocat", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 27 },
-        Delivery { event_type: "challenge_completed_event", github_username: "octocat", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 28 },
+        Delivery { event_type: "challenge_started_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 26 },
+        Delivery { event_type: "challenge_cancelled_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 27 },
+        Delivery { event_type: "challenge_completed_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 28 },
         Delivery { event_type: "staged_wasm_cleared_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 29 },
         Delivery { event_type: "upgrade_proposed_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 30 },
         Delivery { event_type: "upgrade_approved_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 31 },
@@ -144,10 +144,10 @@ fn deliveries() -> Vec<Delivery> {
         Delivery { event_type: "verification_configured_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 34 },
         Delivery { event_type: "audit_config_changed_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 35 },
         // Exact reconnect deliveries for every event type.
-        Delivery { event_type: "registered_event", github_username: "octocat", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 1 },
-        Delivery { event_type: "bot_status_changed_event", github_username: "octocat", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 2 },
-        Delivery { event_type: "removed_event", github_username: "octocat", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 3 },
-        Delivery { event_type: "verified_event", github_username: "octocat", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 4 },
+        Delivery { event_type: "registered_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 1 },
+        Delivery { event_type: "bot_status_changed_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 2 },
+        Delivery { event_type: "removed_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 3 },
+        Delivery { event_type: "verified_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 4 },
         Delivery { event_type: "verification_revoked_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 5 },
         Delivery { event_type: "upgraded_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 6 },
         Delivery { event_type: "paused_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 7 },
@@ -158,9 +158,9 @@ fn deliveries() -> Vec<Delivery> {
         Delivery { event_type: "role_grant_pending_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 12 },
         Delivery { event_type: "role_grant_cancelled_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 13 },
         Delivery { event_type: "renamed_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 14 },
-        Delivery { event_type: "rotation_requested_event", github_username: "octocat", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 15 },
-        Delivery { event_type: "rotation_executed_event", github_username: "octocat", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 16 },
-        Delivery { event_type: "rotation_cancelled_event", github_username: "octocat", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 17 },
+        Delivery { event_type: "rotation_requested_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 15 },
+        Delivery { event_type: "rotation_executed_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 16 },
+        Delivery { event_type: "rotation_cancelled_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 17 },
         Delivery { event_type: "wasm_staged_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 18 },
         Delivery { event_type: "upgrade_attested_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 19 },
         Delivery { event_type: "attestation_cleared_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 20 },
@@ -169,9 +169,9 @@ fn deliveries() -> Vec<Delivery> {
         Delivery { event_type: "batch_remove_proposed_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 23 },
         Delivery { event_type: "batch_remove_executed_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 24 },
         Delivery { event_type: "batch_remove_cancelled_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 25 },
-        Delivery { event_type: "challenge_started_event", github_username: "octocat", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 26 },
-        Delivery { event_type: "challenge_cancelled_event", github_username: "octocat", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 27 },
-        Delivery { event_type: "challenge_completed_event", github_username: "octocat", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 28 },
+        Delivery { event_type: "challenge_started_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 26 },
+        Delivery { event_type: "challenge_cancelled_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 27 },
+        Delivery { event_type: "challenge_completed_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 28 },
         Delivery { event_type: "staged_wasm_cleared_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 29 },
         Delivery { event_type: "upgrade_proposed_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 30 },
         Delivery { event_type: "upgrade_approved_event", github_username: "", stellar_address: "", ledger_sequence: 1_003_000, tx_hash: tx5, event_index: 31 },
@@ -202,14 +202,14 @@ impl Consumer {
         }
         self.applied += 1;
         *self.per_type.entry(d.event_type).or_default() += 1;
-        match d.event_type {
-            "registered_event" => {
+        match (d.event_type, d.github_username) {
+            ("registered_event", "octocat") => {
                 self.address = Some(d.stellar_address.to_string());
                 self.verified = false;
             }
-            "verified_event" => self.verified = true,
-            "verification_revoked_event" => self.verified = false,
-            "removed_event" => self.address = None,
+            ("verified_event", "octocat") => self.verified = true,
+            ("verification_revoked_event", "octocat") => self.verified = false,
+            ("removed_event", "octocat") => self.address = None,
             // Envelope-only model: record non-registry events by type and stable ID.
             // Their domain-specific state is handled by downstream projections.
             _ => {},
