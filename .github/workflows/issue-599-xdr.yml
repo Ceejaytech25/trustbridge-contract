@@ -36,6 +36,8 @@ jobs:
               (target / (name + '.xdr')).write_text(marker.group(1).strip() + '\n')
               (target / (name + '.meta.json')).write_text(marker.group(2).strip() + '\n')
           PY
+      - name: Run TypeScript differential tests
+        run: make diff-test
       - name: Commit generated fixtures
         run: |
           git config user.name "github-actions[bot]"
