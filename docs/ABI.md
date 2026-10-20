@@ -540,6 +540,20 @@ and `test_bench_batch_remove_max`, not just editing the constant.**
 
 ## Functions
 
+### `stage_wasm(caller: Address, wasm_hash: BytesN<32>) -> Result<(), ContractError>`
+
+Stages the intended upgrade hash; admin or Upgrader authorization required.
+Replaces any existing staged slot.
+
+### `get_staged() -> Option<StagedWasm>`
+
+Public read of the staged slot, returning `None` when empty.
+
+### `clear_staged(caller: Address) -> Result<(), ContractError>`
+
+Admin-only, idempotent slot clearing. This is the exported function, not
+the internal `clear_staged_wasm` helper; `commit_staged_wasm` is not exported.
+
 ### `initialize(admin: Address) -> Result<(), ContractError>`
 
 One-time setup. Stores the admin address and zeroes counters.
