@@ -3,6 +3,18 @@
   "source": "docs/ABI.md",
   "functions": [
     {
+      "name": "stage_wasm",
+      "signature": "stage_wasm(caller: Address, wasm_hash: BytesN<32>) -> Result<(), ContractError>"
+    },
+    {
+      "name": "get_staged",
+      "signature": "get_staged() -> Option<StagedWasm>"
+    },
+    {
+      "name": "clear_staged",
+      "signature": "clear_staged(caller: Address) -> Result<(), ContractError>"
+    },
+    {
       "name": "initialize",
       "signature": "initialize(admin: Address) -> Result<(), ContractError>"
     },
