@@ -117,7 +117,10 @@ everything else below requires admin) and `tests/auth_matrix.csv`.
 | `clear_emergency_pause` | ✅ | ❌ (`NotAuthorized`) | ❌ | Guardian deliberately cannot clear; admin review required |
 | `set_guardian` / `remove_guardian` | ✅ | ❌ | ❌ | Guardian onboarding is admin-only; see [ADMIN_RUNBOOK guardian recipes](ADMIN_RUNBOOK.md#guardian-recipes) |
 | `set_role` / `remove_role` / `set_role_with_expiry` / `activate_role` | ✅ | ❌ | ❌ | Guardian cannot grant roles, even to itself, unless it also holds admin |
-| `upgrade` / `stage_wasm` / `attest_upgrade` / multisig upgrade propose/approve/execute | ✅ | ❌ | ❌ | WASM upgrade paths remain multisig-gated admin-only |
+| `upgrade` / `attest_upgrade` / `clear_staged` | ✅ | ❌ | ❌ | Admin-only upgrade and staged-slot clearing; `clear_staged` is idempotent |
+| `stage_wasm` | ✅ | ❌ | ❌ | Admin or Upgrader-role holder; guardian/verifier alone cannot stage |
+| `get_staged` | ✅ | ✅ | ✅ | Public read, no auth (also available to unauthenticated callers) |
+| `propose_multisig_upgrade` / `approve_upgrade` / `execute_upgrade` | ✅ | ❌ | ❌ | Also callable by Upgrader-role holders, subject to proposal rules |
 | `batch_remove` (incl. dual-control propose/execute) | ✅ | ❌ | ❌ | Large removes need admin, never guardian |
 | `pause` / `unpause` | ✅ | ❌ | ❌ | Plain pause is admin-only; guardian path is `emergency_pause` only |
 

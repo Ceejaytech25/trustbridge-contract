@@ -375,6 +375,46 @@ stellar contract invoke --id "$CONTRACT_ID" --source-account admin --network "$N
 
 ---
 
+### Staged WASM CLI recipes
+
+The externally callable ABI functions are `stage_wasm`, `get_staged`,
+and `clear_staged`. In particular, `commit_staged_wasm` is **not** an
+exported function; `clear_staged_wasm` is only an internal Rust storage
+helper. See [ABI staged WASM entrypoints](ABI.md#staged-wasm-entrypoints-issue-594)
+and [staged-slot security](SECURITY.md#staged-wasm-slot-issue-300).
+
+The hash below is the 32-byte hex WASM hash returned by
+`stellar contract install`. `CONTRACT_ID`, `NETWORK`, and `ADMIN`
+follow the [CLI conventions](#conventions--auth-gotchas).
+
+```bash
+# Install the candidate WASM and obtain its hash.
+HASH=$(stellar contract install --wasm target/wasm32v1-none/release/trustbridge_contract.wasm \
+  --source-account admin --network "$NETWORK")
+
+# Stage the intended hash (admin or Upgrader); --caller must sign.
+stellar contract invoke --id "$CONTRACT_ID" --source-account admin --network "$NETWORK" --send=yes \
+  -- stage_wasm --caller "$ADMIN" --wasm-hash "$HASH"
+
+# Public read: inspect the staged hash before requesting an upgrade.
+stellar contract invoke --id "$CONTRACT_ID" --source-account admin --network "$NETWORK" \
+  -- get_staged
+
+# Admin-only: retract a staged hash if the upgrade is cancelled.
+stellar contract invoke --id "$CONTRACT_ID" --source-account admin --network "$NETWORK" --send=yes \
+  -- clear_staged --caller "$ADMIN"
+```
+
+Staging is advisory: absent a staged hash, ordinary upgrade rules still
+apply. When a hash is staged, `execute_upgrade` must use that hash.
+`clear_staged` is idempotent and does not emit a clearing event for an
+already-empty slot. These are separate calls, not a
+`commit_staged_wasm` operation. The upgrade itself follows the
+[upgrade and attestation](#upgrade--attestation-recipes) or
+[multisig upgrade](#multisig-upgrade-flow-issue-301) recipe.
+
+---
+
 ### Upgrade & attestation recipes
 
 Full upgrade procedure: [DEPLOYMENT.md § Upgrade Window](DEPLOYMENT.md#upgrade-window-read-only-mode).
