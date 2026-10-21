@@ -221,6 +221,23 @@ contract-side behaviour these batches rely on.
 > tightens its cap, and every one comes back `InvalidBatchSize` — a keeper that
 > appears to run and extends nothing, while the records expire silently.
 
+### Partial batches and expiry generations (Issue #669)
+
+`extend_registry_ttl` never leaves a batch half-applied:
+
+- **Unregistered usernames are skipped**, not fatal. Every registered username
+  in the same call is still extended, so all of them land in one expiry
+  generation (`TTL_BUMP` ledgers from the current ledger). The return value
+  counts only the extended entries — compare it with the batch length to spot
+  names the keeper's off-chain list should drop.
+- **A rejected call extends nothing.** `NotInitialized` and `InvalidBatchSize`
+  are returned before any entry is touched, so a keeper retrying after a
+  rejection never sees mixed TTLs from the failed attempt.
+
+Locked by `test_extend_registry_ttl_partial_batch_leaves_single_expiry_generation`
+and `test_extend_registry_ttl_rejected_batch_extends_nothing` in
+[tests/extend_registry_ttl.rs](../tests/extend_registry_ttl.rs).
+
 ### Running the keeper
 
 `scripts/ttl_keeper.sh` is the reference implementation of the loop above. Run

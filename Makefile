@@ -45,7 +45,7 @@ FUTURENET_DRY_RUN ?= false
         invoke-propose-batch-remove invoke-execute-batch-remove invoke-cancel-batch-remove \
         invoke-get-pending-batch-remove \
         ttl-keeper \
-	export-registry validate-registry dr-test futurenet-smoke assert-build \
+	export-registry validate-registry dr-test futurenet-smoke network-params assert-build \
 	xdr-fixtures diff-test
 
 help: ## Show this help
@@ -574,6 +574,13 @@ futurenet-smoke: ## Deploy and smoke-check Futurenet using pinned RPC and Friend
 	ADMIN=$(ADMIN) SOURCE=$(SOURCE) IDENTITY=$(FUTURENET_IDENTITY) \
 		RPC_URL=$(FUTURENET_RPC_URL) FRIENDBOT_URL=$(FUTURENET_FRIENDBOT_URL) \
 		STELLAR=$(STELLAR) DRY_RUN=$(FUTURENET_DRY_RUN) ./scripts/futurenet_smoke_test.sh
+network-params: ## Print RPC, passphrase, and funding parameters for NETWORK (fails on unknown NETWORK)
+	@case "$(NETWORK)" in \
+	  testnet)   echo "NETWORK=testnet";   echo "RPC_URL=https://soroban-testnet.stellar.org"; echo "PASSPHRASE=Test SDF Network ; September 2015"; echo "FRIENDBOT=https://friendbot.stellar.org" ;; \
+	  futurenet) echo "NETWORK=futurenet"; echo "RPC_URL=$(FUTURENET_RPC_URL)"; echo "PASSPHRASE=Test SDF Future Network ; October 2022"; echo "FRIENDBOT=$(FUTURENET_FRIENDBOT_URL)" ;; \
+	  mainnet)   echo "NETWORK=mainnet";   echo "RPC_URL=<operator-provided>"; echo "PASSPHRASE=Public Global Stellar Network ; September 2015"; echo "FRIENDBOT=<none>" ;; \
+	  *) echo "error: unknown NETWORK '$(NETWORK)' (expected testnet|futurenet|mainnet)" >&2; exit 1 ;; \
+	esac
 TTL_KEEPER_BATCH_SIZE ?=
 TTL_KEEPER_DRY_RUN ?= false
 

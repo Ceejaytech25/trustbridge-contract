@@ -32,6 +32,14 @@ Related docs: [README](../README.md) · [ARCHITECTURE](ARCHITECTURE.md) · [DEPL
 | Single compromised admin key wiping a large slice of the registry in one `batch_remove` call | Above a configurable size threshold, `batch_remove` requires a second, distinct admin-equivalent signature — see [Dual-Control batch_remove](#dual-control-batch_remove-issue-219) |
 | Auditor trusting an unbound, unsigned `export_registry.sh` JSON dump | `export_attestation` binds a page to a SHA-256 digest, version, and ledger for offline comparison — see [Signed Export Attestation](#signed-export-attestation-issue-223) |
 
+### Export record binding (Issue #672)
+
+Every `ExportPage.merkle_root` binds each exported record's username, Stellar
+address, verified flag, and page position. Altering any of these fields,
+reordering rows, or dropping a row after export produces a different root, so
+a consumer recomputing the root with `merkle_leaf_hash` detects the tamper.
+Locked by `tests/record_proof.rs::test_export_binding_rejects_tampered_records`.
+
 ### Out of Scope (handled off-chain)
 
 | Concern | Responsibility |
