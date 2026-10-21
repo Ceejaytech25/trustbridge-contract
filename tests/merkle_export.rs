@@ -376,3 +376,100 @@ fn test_v1_export_merkle_golden_vectors() {
         );
     });
 }
+
+// ── Proof verification negative tests (Issue #667) ───────────────────────────
+
+/// Registers `names` and returns the exported page's leaves and merkle root.
+fn page_leaves(env: &Env, contract_id: &Address, names: &[&str]) -> (SVec<BytesN<32>>, BytesN<32>) {
+    env.mock_all_auths();
+    env.as_contract(contract_id, || {
+        for name in names {
+            TrustBridgeContract::register(
+                env.clone(),
+                s(env, name),
+                Address::generate(env),
+                SVec::new(env),
+            )
+            .unwrap();
+        }
+        let page = TrustBridgeContract::get_registered_paginated(env.clone(), None, 10).unwrap();
+        let mut leaves: SVec<BytesN<32>> = SVec::new(env);
+        for (username, record) in page.records.iter() {
+            leaves.push_back(leaf_hash(
+                env,
+                &username,
+                &record.stellar_address,
+                record.verified,
+            ));
+        }
+        (leaves, page.merkle_root)
+    })
+}
+
+#[test]
+fn test_truncated_proof_fails_verification() {
+    let (env, _admin, contract_id) = setup();
+    let (leaves, root) = page_leaves(
+        &env,
+        &contract_id,
+        &["alice", "bob", "carol", "dave", "erin"],
+    );
+
+    let leaf = leaves.get(1).unwrap();
+    let proof = build_proof(&env, &leaves, 1);
+    assert!(
+        verify_proof(&env, &leaf, &proof, &root),
+        "full proof must verify"
+    );
+
+    for keep in 0..proof.len() {
+        assert!(
+            !verify_proof(&env, &leaf, &proof[..keep], &root),
+            "proof truncated to {keep} step(s) must not verify"
+        );
+    }
+}
+
+#[test]
+fn test_reordered_leaves_fail_verification() {
+    let (env, _admin, contract_id) = setup();
+    let (leaves, root) = page_leaves(&env, &contract_id, &["alice", "bob", "carol", "dave"]);
+
+    let mut swapped = leaves.clone();
+    swapped.set(0, leaves.get(1).unwrap());
+    swapped.set(1, leaves.get(0).unwrap());
+
+    // A proof built from the reordered leaf set must not verify against the
+    // published root, even though it contains exactly the same leaves.
+    let proof = build_proof(&env, &swapped, 0);
+    assert!(!verify_proof(&env, &swapped.get(0).unwrap(), &proof, &root));
+
+    // Flipping a step's side is the in-proof equivalent of reordering.
+    let mut flipped = build_proof(&env, &leaves, 0);
+    if let Step::Pair {
+        sibling_is_left, ..
+    } = &mut flipped[0]
+    {
+        *sibling_is_left = !*sibling_is_left;
+    }
+    assert!(!verify_proof(
+        &env,
+        &leaves.get(0).unwrap(),
+        &flipped,
+        &root
+    ));
+}
+
+#[test]
+fn test_proof_for_wrong_index_fails_verification() {
+    let (env, _admin, contract_id) = setup();
+    let (leaves, root) = page_leaves(&env, &contract_id, &["alice", "bob", "carol"]);
+
+    let proof_for_bob = build_proof(&env, &leaves, 1);
+    assert!(!verify_proof(
+        &env,
+        &leaves.get(0).unwrap(),
+        &proof_for_bob,
+        &root
+    ));
+}

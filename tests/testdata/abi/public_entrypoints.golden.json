@@ -19,8 +19,16 @@
       "arity": 0
     },
     {
+      "name": "get_health_probes",
+      "arity": 0
+    },
+    {
       "name": "get_oracle_allowlist",
       "arity": 0
+    },
+    {
+      "name": "get_pending_reverify",
+      "arity": 2
     },
     {
       "name": "get_registered_paginated",

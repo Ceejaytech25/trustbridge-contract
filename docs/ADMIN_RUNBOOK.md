@@ -625,6 +625,13 @@ CONTRACT_ID="$CONTRACT_ID" NETWORK="$NETWORK" \
 
 ---
 
+## Pre-Wave health probes (Issue #668)
+
+Before opening a Wave, run `get_health_probes` (no auth, works while paused)
+and confirm `paused: false` and `admin_set: true`; record `index_gen` so a
+later jump flags unexpected removals. Field meanings and remediation are in
+[`CONTRACT_HEALTH.md`](CONTRACT_HEALTH.md#pre-wave-probes-issue-668).
+
 ## Storage TTL Maintenance (Keeper)
 
 Soroban persistent entries expire unless their TTL is extended. A registry with inactive contributors will silently lose its cold entries if not maintained.

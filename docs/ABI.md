@@ -224,6 +224,19 @@ struct HealthSnapshot {
 }
 ```
 
+### HealthProbes
+
+Returned by `get_health_probes` (Issue #668). Never errors — an
+uninitialized deployment reports `admin_set: false`.
+
+```rust
+struct HealthProbes {
+    paused: bool,
+    admin_set: bool,
+    index_gen: u32,             // bumped on every index removal
+}
+```
+
 ### ChallengeRecord
 
 Returned by `get_challenge` (Issue #214).
@@ -1050,6 +1063,46 @@ record's current `stellar_address` — see
 `OracleProofBadLayout` (58), `OracleProofNotAllowlisted` (59),
 `OracleProofExpired` (60), `OracleProofBadSignature` (61), `AlreadyVerified`.
 A well-formed signature that does not verify traps the invocation.
+
+---
+
+### `get_pending_reverify(offset: u32, limit: u32) -> Result<Vec<String>, ContractError>`
+
+Lists canonical GitHub usernames flagged for re-verification after an address
+change (`PENDING_REVERIFY_KEY`, Issue #587).
+
+| | |
+|---|---|
+| **Auth** | None (read-only) |
+| **Mutates** | No |
+| **Errors** | `NotInitialized`, `InvalidBatchSize` (`limit > MAX_PAGE_LIMIT`) |
+| **Returns** | `Vec<String>` — flagged usernames within the scanned window |
+| **Pagination** | Offset-based over the registry index: scans entries `[offset, offset + limit)` |
+| **Limit** | `0` → `DEFAULT_PAGE_LIMIT`; `> MAX_PAGE_LIMIT` (100) → `InvalidBatchSize` |
+
+Gas is bounded by `limit`, so a page may hold fewer than `limit` names (or
+none) while more remain. Advance `offset` by `limit` until it reaches
+`get_stats().total`. An empty registry returns an empty page. A name drops
+out once `verify` / `batch_verify` clears its flag; `rename` moves the flag
+to the new name.
+
+```bash
+stellar contract invoke --id $ID --network testnet \
+  -- get_pending_reverify --offset 0 --limit 100
+```
+
+---
+
+### `get_health_probes() -> HealthProbes`
+
+Pre-Wave operator probes: pause flag, admin presence, index generation
+(Issue #668). See [`CONTRACT_HEALTH.md`](CONTRACT_HEALTH.md#pre-wave-probes-issue-668).
+
+| | |
+|---|---|
+| **Auth** | None (read-only; works while paused) |
+| **Mutates** | No |
+| **Errors** | None — uninitialized reports `admin_set: false` |
 
 ---
 

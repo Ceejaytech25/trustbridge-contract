@@ -487,3 +487,93 @@ fn test_soak_generation_bump_invalidates_old_cursors() {
         );
     });
 }
+
+// ── get_pending_reverify (Issue #587) ────────────────────────────────────────
+
+/// Registers and verifies `name`, then re-registers it to a new address so the
+/// contract flags it for re-verification. Each call runs in its own frame so
+/// the admin auth is not reused.
+fn flag_reverify(env: &Env, contract_id: &Address, admin: &Address, name: &str) {
+    let register = || {
+        env.as_contract(contract_id, || {
+            TrustBridgeContract::register(
+                env.clone(),
+                s(env, name),
+                Address::generate(env),
+                Vec::new(env),
+            )
+            .unwrap();
+        })
+    };
+    register();
+    env.as_contract(contract_id, || {
+        TrustBridgeContract::verify(env.clone(), admin.clone(), s(env, name)).unwrap();
+    });
+    register();
+}
+
+#[test]
+fn test_get_pending_reverify_empty_registry_returns_empty_page() {
+    let (env, _admin, contract_id) = setup();
+    env.as_contract(&contract_id, || {
+        let page = TrustBridgeContract::get_pending_reverify(env.clone(), 0, 10).unwrap();
+        assert_eq!(page.len(), 0);
+    });
+}
+
+#[test]
+fn test_get_pending_reverify_two_page_walk_and_clear_on_verify() {
+    let (env, admin, contract_id) = setup();
+    env.mock_all_auths();
+    flag_reverify(&env, &contract_id, &admin, "carol");
+    env.as_contract(&contract_id, || {
+        TrustBridgeContract::register(
+            env.clone(),
+            s(&env, "bob"),
+            Address::generate(&env),
+            Vec::new(&env),
+        )
+        .unwrap();
+    });
+    flag_reverify(&env, &contract_id, &admin, "dave");
+    env.as_contract(&contract_id, || {
+        let first = TrustBridgeContract::get_pending_reverify(env.clone(), 0, 2).unwrap();
+        assert_eq!(first, Vec::from_array(&env, [s(&env, "carol")]));
+        let second = TrustBridgeContract::get_pending_reverify(env.clone(), 2, 2).unwrap();
+        assert_eq!(second, Vec::from_array(&env, [s(&env, "dave")]));
+        let past_end = TrustBridgeContract::get_pending_reverify(env.clone(), 4, 2).unwrap();
+        assert_eq!(past_end.len(), 0);
+    });
+
+    // Re-verifying clears the flag, so the name drops out of the page.
+    env.as_contract(&contract_id, || {
+        TrustBridgeContract::verify(env.clone(), admin.clone(), s(&env, "carol")).unwrap();
+    });
+    env.as_contract(&contract_id, || {
+        let after = TrustBridgeContract::get_pending_reverify(env.clone(), 0, 100).unwrap();
+        assert_eq!(after, Vec::from_array(&env, [s(&env, "dave")]));
+    });
+}
+
+#[test]
+fn test_get_pending_reverify_limit_above_max_is_rejected() {
+    let (env, _admin, contract_id) = setup();
+    env.as_contract(&contract_id, || {
+        assert_eq!(
+            TrustBridgeContract::get_pending_reverify(env.clone(), 0, 101),
+            Err(ContractError::InvalidBatchSize)
+        );
+    });
+}
+
+#[test]
+fn test_get_pending_reverify_requires_initialized() {
+    let env = Env::default();
+    let contract_id = env.register(TrustBridgeContract, ());
+    env.as_contract(&contract_id, || {
+        assert_eq!(
+            TrustBridgeContract::get_pending_reverify(env.clone(), 0, 10),
+            Err(ContractError::NotInitialized)
+        );
+    });
+}

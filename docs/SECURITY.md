@@ -1538,3 +1538,11 @@ another. Every repair is an explicit, auditable admin transaction.
 Covered by `tests/repair_index.rs`, which drifts the counters against a
 known-good fixture and checks both the dry-run report and the corrected
 on-chain state after `apply = true`.
+
+## Cross-network misuse (Issue #666)
+
+`initialize` records the executing network id, and every gated entrypoint
+re-checks it via `require_initialized`. State initialized on pubnet and
+executed on testnet — or the reverse — fails closed with `NetworkMismatch`
+(code 30) before any write, so a rejected call leaves no partial state.
+Covered by the pubnet/testnet cases in `tests/network_mismatch.rs`.

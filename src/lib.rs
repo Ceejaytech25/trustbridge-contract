@@ -63,10 +63,10 @@ pub use oracle_proof::{
 };
 pub use staged_wasm::StagedWasm;
 pub use storage::{
-    ChallengeRecord, ContributorRecord, ExportAttestation, ExportPage, HealthSnapshot, PauseReason,
-    PendingBatchRemove, PendingRoleGrant, PendingRotation, RecordProof, RepairReport, Role,
-    RoleHolder, Stats, VerificationConfig, VerifierAllowEntry, WasmAttestation, WasmProvenance,
-    MAX_FALLBACK_ADDRESSES, MAX_VERIFIERS,
+    ChallengeRecord, ContributorRecord, ExportAttestation, ExportPage, HealthProbes,
+    HealthSnapshot, PauseReason, PendingBatchRemove, PendingRoleGrant, PendingRotation,
+    RecordProof, RepairReport, Role, RoleHolder, Stats, VerificationConfig, VerifierAllowEntry,
+    WasmAttestation, WasmProvenance, MAX_FALLBACK_ADDRESSES, MAX_VERIFIERS,
 };
 pub use version::Version;
 
@@ -3405,6 +3405,29 @@ impl TrustBridgeContract {
         get_public_paginated_internal(&env, cursor, limit)
     }
 
+    /// Returns a page of GitHub usernames flagged for re-verification after an
+    /// address change (Issue #587).
+    ///
+    /// Scans registry index entries `[offset, offset + limit)` and returns the
+    /// canonical usernames whose `PENDING_REVERIFY_KEY` flag is set. Gas is
+    /// bounded by `limit`, so a page can hold fewer than `limit` names; keep
+    /// advancing `offset` by `limit` until it reaches `get_stats().total`.
+    /// `limit == 0` uses `DEFAULT_PAGE_LIMIT`. An empty registry returns an
+    /// empty page. Read-only, no auth required.
+    ///
+    /// # Errors
+    ///
+    /// - [`ContractError::NotInitialized`] if `initialize` has not been called.
+    /// - [`ContractError::InvalidBatchSize`] if `limit > MAX_PAGE_LIMIT` (100).
+    pub fn get_pending_reverify(
+        env: Env,
+        offset: u32,
+        limit: u32,
+    ) -> Result<Vec<String>, ContractError> {
+        require_initialized(&env)?;
+        crate::storage::get_pending_reverify_page(&env, offset, limit)
+    }
+
     /// Toggles contract pause state. Admin-only (Issue #3).
     ///
     /// Operators use this as the read-only upgrade window switch: set
@@ -4318,6 +4341,21 @@ impl TrustBridgeContract {
             cooldown_remaining_secs,
             attestation_present,
         })
+    }
+
+    /// Returns the pre-Wave operator probes: pause flag, admin presence, and
+    /// index generation (Issue #668).
+    ///
+    /// Read-only, no auth required, works while paused, and — unlike
+    /// [`get_health`](Self::get_health) — never errors: an uninitialized
+    /// deployment reports `admin_set: false` so the probe fails closed with a
+    /// readable answer instead of `NotInitialized`.
+    pub fn get_health_probes(env: Env) -> HealthProbes {
+        HealthProbes {
+            paused: storage_is_paused(&env),
+            admin_set: crate::storage::has_admin(&env),
+            index_gen: crate::storage::get_index_generation(&env),
+        }
     }
 
     // ── Challenge-period flow (Issue #214) ───────────────────────────────────
