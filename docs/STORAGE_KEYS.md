@@ -72,7 +72,7 @@ These keys use **tuples** as storage keys, where the first element is a `Symbol`
 | `"chunk"` | `CHUNK_KEY` | `u32` (chunk index) | `Vec<String>` | Chunked slice of the username index for paginated reads |
 | `"lastact"` | `LAST_ACT_KEY` | `String` (GitHub username) | `u64` (ledger timestamp) | Per-user cooldown tracking for rate-limiting |
 | `"pendrot"` | `PENDING_ROT_KEY` | `String` (GitHub username) | `PendingRotation` | Pending address rotation with delay (Issue #234) |
-| `"pend_rev"` | `PENDING_REVERIFY_KEY` | `String` (GitHub username, canonical lower-case) | `bool` | Flag indicating re-verification needed after address change (Issue #208). Set (TTL-extended) when a verified record changes address; cleared by `verify`/`batch_verify` and whenever the record is removed; moved to the new name by `rename` |
+| `"pend_rev"` | `PENDING_REVERIFY_KEY` | `String` (GitHub username, canonical lower-case) | `bool` | Flag indicating re-verification needed after address change (Issue #208). Set (TTL-extended) when a verified record changes address; cleared by `verify`/`batch_verify` and whenever the record is removed; moved to the new name by `rename`. Listed by `get_pending_reverify(offset, limit)` (Issue #587) |
 | `"chllng"` | `CHALLENGE_KEY` | `String` (GitHub username) | `ChallengeRecord` | Squatter challenge record (Issue #214) |
 | `"pendrole"` | `PENDING_ROLE_KEY` | `Address` | `PendingRoleGrant` | Timelocked role grant awaiting activation (Issue #220) |
 | `"role_exp"` | `ROLE_EXPIRY_KEY` | `Address` | `u64` (timestamp) | Expiry timestamp for role grant (Issue #221) |

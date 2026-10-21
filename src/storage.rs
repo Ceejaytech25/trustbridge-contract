@@ -533,6 +533,21 @@ pub struct HealthSnapshot {
     pub attestation_present: bool,
 }
 
+/// Pre-Wave operator probes for pause flag, admin presence, and index
+/// generation (Issue #668). Returned by `get_health_probes`, which — unlike
+/// `get_health` — works before `initialize`, so an uninitialized deployment
+/// reports `admin_set: false` instead of failing.
+#[derive(Clone, Debug, Eq, PartialEq)]
+#[soroban_sdk::contracttype]
+pub struct HealthProbes {
+    /// Whether the contract is currently paused.
+    pub paused: bool,
+    /// Whether an admin has been written by `initialize`.
+    pub admin_set: bool,
+    /// Current registry index generation (bumped on removals).
+    pub index_gen: u32,
+}
+
 /// A pending squatter-challenge record stored per username (Issue #214).
 ///
 /// Admin starts a challenge on a registered name. After `resolve_after` the
@@ -623,6 +638,11 @@ pub fn require_initialized(env: &Env) -> Result<(), ContractError> {
         return Err(ContractError::NotInitialized);
     }
     require_matching_network(env)
+}
+
+/// Returns whether an admin is stored, without the init/network gate.
+pub fn has_admin(env: &Env) -> bool {
+    env.storage().instance().has(&ADMIN_KEY)
 }
 
 pub fn get_admin(env: &Env) -> Result<Address, ContractError> {
@@ -1350,6 +1370,35 @@ pub fn set_pending_reverify(env: &Env, github_username: &String, flag: bool) {
 pub fn clear_pending_reverify(env: &Env, github_username: &String) {
     let key = (PENDING_REVERIFY_KEY, canon(env, github_username));
     env.storage().persistent().remove(&key);
+}
+
+/// Returns the usernames flagged for re-verification among index entries
+/// `[offset, offset + limit)` (Issue #587).
+///
+/// The scan touches at most `limit` index entries, so gas stays bounded no
+/// matter how large the registry is; a page may therefore hold fewer than
+/// `limit` usernames. Callers advance `offset` by `limit` until it reaches
+/// the registry count. `limit == 0` falls back to `DEFAULT_PAGE_LIMIT`.
+///
+/// # Errors
+///
+/// - [`ContractError::InvalidBatchSize`] if `limit > MAX_PAGE_LIMIT`.
+pub fn get_pending_reverify_page(
+    env: &Env,
+    offset: u32,
+    limit: u32,
+) -> Result<Vec<String>, ContractError> {
+    if limit > MAX_PAGE_LIMIT {
+        return Err(ContractError::InvalidBatchSize);
+    }
+    let names = get_index_page(env, offset, limit);
+    let mut page = Vec::new(env);
+    for username in names.iter() {
+        if get_pending_reverify(env, &username) {
+            page.push_back(username);
+        }
+    }
+    Ok(page)
 }
 
 pub fn get_last_upgrade(env: &Env) -> u64 {

@@ -69,6 +69,14 @@
     {
       "name": "verify_with_oracle_proof",
       "signature": "verify_with_oracle_proof(github_username: String, proof: OracleProof) -> Result<(), ContractError>"
+    },
+    {
+      "name": "get_pending_reverify",
+      "signature": "get_pending_reverify(offset: u32, limit: u32) -> Result<Vec<String>, ContractError>"
+    },
+    {
+      "name": "get_health_probes",
+      "signature": "get_health_probes() -> HealthProbes"
     }
   ],
   "errors": [

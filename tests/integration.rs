@@ -4452,3 +4452,39 @@ fn test_scale_batch_register_multi_batch_load() {
         assert_eq!(stats.total, total_registered);
     });
 }
+
+// ── get_health_probes (Issue #668) ───────────────────────────────────────────
+
+#[test]
+fn test_health_probes_report_pause_admin_and_index_gen() {
+    let (env, admin, user1, _user2, contract_id) = setup_test_env();
+    env.mock_all_auths();
+    env.as_contract(&contract_id, || {
+        let probes = TrustBridgeContract::get_health_probes(env.clone());
+        assert!(!probes.paused);
+        assert!(probes.admin_set);
+        let gen0 = probes.index_gen;
+
+        TrustBridgeContract::register(env.clone(), s(&env, "alice"), user1.clone(), Vec::new(&env))
+            .unwrap();
+        TrustBridgeContract::remove(env.clone(), admin.clone(), s(&env, "alice")).unwrap();
+        TrustBridgeContract::pause(env.clone(), 1).unwrap();
+
+        let probes = TrustBridgeContract::get_health_probes(env.clone());
+        assert!(probes.paused, "probe must work while paused");
+        assert!(probes.admin_set);
+        assert!(probes.index_gen > gen0, "removal must bump index_gen");
+    });
+}
+
+#[test]
+fn test_health_probes_uninitialized_reports_no_admin() {
+    let env = Env::default();
+    let contract_id = env.register(TrustBridgeContract, ());
+    env.as_contract(&contract_id, || {
+        let probes = TrustBridgeContract::get_health_probes(env.clone());
+        assert!(!probes.admin_set);
+        assert!(!probes.paused);
+        assert_eq!(probes.index_gen, 0);
+    });
+}
