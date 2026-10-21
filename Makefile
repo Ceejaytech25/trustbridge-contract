@@ -238,10 +238,13 @@ wasm-size: build ## Report release WASM size and check against budget (WASM_SIZE
 error-codes: ## Verify ContractError discriminants agree across enum, golden, and ABI.md (Issue #402)
 	./scripts/check_error_codes.sh
 
+subgraph-parity: ## Check Graph schema/entity coverage and documented waivers (Issue #600)
+	python3 scripts/check_subgraph_parity.py
+
 event-topics: ## Verify the indexer's topic table matches src/events.rs (Issue #399)
 	./scripts/check_event_topics.sh
 
-check: fmt lint error-codes event-topics abi-check test build docs-check wasm-size ## Run full local quality gate
+check: fmt lint error-codes event-topics subgraph-parity abi-check test build docs-check wasm-size ## Run full local quality gate
 
 wasm-hash-pin: build ## Verify release WASM hash matches wasm-hash.pin (mirrors CI hash gate)
 	@if [ -f $(WASM_V1) ]; then WASM=$(WASM_V1); elif [ -f $(WASM_LEGACY) ]; then WASM=$(WASM_LEGACY); else echo "ERROR: No WASM artifact found. Run 'make build' first."; exit 1; fi; \
