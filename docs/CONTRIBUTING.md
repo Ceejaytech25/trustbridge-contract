@@ -350,6 +350,54 @@ rejected in code review.
 
 ---
 
+## Fuzz Testing
+
+The `fuzz/` directory contains `cargo-fuzz` targets that complement the
+homoglyph corpus and unit tests with random byte-level exploration.
+
+**Requires a nightly toolchain** — `cargo-fuzz` is a nightly-only tool.
+Install it once:
+
+```bash
+rustup toolchain install nightly
+cargo install --locked cargo-fuzz
+```
+
+### Available targets
+
+| Target | Path | What it fuzzes |
+|---|---|---|
+| `export_cursor` | `fuzz/fuzz_targets/export_cursor.rs` | Paginated-export cursor parsing (`get_public_paginated`) |
+| `username_validate` | `fuzz/fuzz_targets/username_validate.rs` | `is_valid_github_username` — no-panic guarantee |
+| `github_username` | `fuzz/fuzz_targets/github_username.rs` | `is_valid_github_username` — non-ASCII rejection invariant |
+
+### Running a target
+
+```bash
+# Run the github_username target for 1 000 iterations (smoke test)
+cargo +nightly fuzz run github_username -- -max_total_time=10
+
+# Longer soak (10 million inputs)
+cargo +nightly fuzz run github_username -- -runs=10000000
+```
+
+The `github_username` target asserts two invariants on every input:
+
+1. **No panics** — the validator must never trap.
+2. **Non-ASCII rejection** — any byte ≥ 0x80 must cause the validator
+   to return `false`.  This rules out homoglyph substitution via
+   multi-byte UTF-8 (Cyrillic, Arabic, CJK, accented Latin, emoji).
+
+### Adding a new target
+
+1. Create `fuzz/fuzz_targets/<name>.rs`.
+2. Add a `[[bin]]` entry in `fuzz/Cargo.toml` pointing to it.
+3. Document the target in the table above.
+4. Ensure the target contains an assertion (not just a no-panic check)
+   so it provides more than the existing `username_validate` coverage.
+
+---
+
 ## Supply-chain checks
 
 The `cargo-deny` CI job runs `cargo deny --config deny.toml check` on every

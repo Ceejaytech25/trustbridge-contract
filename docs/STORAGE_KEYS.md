@@ -42,7 +42,7 @@ These keys live in Soroban's **instance** storage partition. Each key is a `Symb
 | `"adt_stat"` | `AUDIT_STATS_KEY` | `AuditStats` | Audit statistics aggregator |
 | `"reserved"` | `RESERVED_KEY` | `Vec<String>` | Reserved username list (Issue #213) |
 | `"adm_xfr"` | `ADMIN_TRANSFER_KEY` | `Option<AdminTransferProposal>` | Pending admin transfer proposal (Issue #195) |
-| `"att_req"` | `ATTEST_REQUIRED_KEY` | `bool` | Whether WASM attestation is required before upgrade (Issue #198) |
+| `"att_req"` | `ATTEST_REQUIRED_KEY` | `bool` | Whether WASM attestation is required before upgrade (Issue #198). Default `false`. Set via `set_attestation_required(caller, bool)` (admin-only); read via `get_attestation_required()` (public). When `true`, `upgrade` and the staged-WASM path fail with `AttestationRequired` if no valid attestation is present. `clear_attestation` does **not** clear this flag. |
 | `"brm_thr"` | `BATCH_REMOVE_THRESHOLD_KEY` | `u32` | Dual-control batch_remove size threshold (Issue #219) |
 | `"brm_pend"` | `PENDING_BATCH_REMOVE_KEY` | `Option<PendingBatchRemove>` | Pending large batch_remove proposal (Issue #219) |
 | `"vfylimit"` | `VERIFY_LIMIT_KEY` | `u32` | Per-ledger verify/revoke rate limit (Issue #292) |
