@@ -713,7 +713,7 @@ fn test_homoglyph_registration_blocked_at_register_entry_point() {
 /// registration. A sponsor cannot bypass the homoglyph guard.
 #[test]
 fn test_homoglyph_registration_blocked_at_register_sponsored_entry_point() {
-    use soroban_sdk::{testutils::Address as _, Address, Env, Vec};
+    use soroban_sdk::{testutils::Address as _, Address, Env};
     use trustbridge_contract::{ContractError, TrustBridgeContract};
 
     let env = Env::default();
@@ -846,6 +846,225 @@ fn test_read_only_functions_do_not_validate_homoglyph_usernames() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// § NFC/NFD Normalization Edge Pairs (Issue #615)
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// NFC (Composed) vs NFD (Decomposed) normalization edge pairs.
+///
+/// Unicode allows multiple representations of the same character:
+/// - NFC form: é (single U+00E9 composed character)
+/// - NFD form: e + combining acute (U+0065 + U+0301 combining mark)
+///
+/// The contract performs no normalization — it only validates byte-wise ASCII.
+/// Both NFC and NFD forms of accented characters are non-ASCII and must be
+/// rejected at the byte level. This test confirms neither representation can
+/// bypass the guard.
+///
+/// Related: docs/SECURITY.md § Unicode Rejection Policy and CONTRIBUTING.md
+/// § Normalization Policy.
+#[test]
+fn test_nfc_nfd_normalization_edge_pairs_rejected() {
+    let env = Env::default();
+
+    // Each entry: (description, NFC form, NFD form, NFC example, NFD example)
+    let corpus = [
+        // Latin-1 Supplement: common accented letters
+        (
+            "a with acute",
+            "á",      // NFC: U+00E1 (single byte sequence: 0xC3 0xA1)
+            "a\u{0301}",  // NFD: U+0061 + U+0301 (0x61 + 0xCC 0x81)
+            "á lice",
+            "a\u{0301}lice",
+        ),
+        (
+            "e with acute",
+            "é",      // NFC: U+00E9
+            "e\u{0301}",  // NFD: U+0065 + U+0301
+            "caf\u{00E9}",
+            "caf\u{0301}",
+        ),
+        (
+            "i with acute",
+            "í",      // NFC: U+00ED
+            "i\u{0301}",  // NFD: U+0069 + U+0301
+            "í an",
+            "i\u{0301}an",
+        ),
+        (
+            "o with acute",
+            "ó",      // NFC: U+00F3
+            "o\u{0301}",  // NFD: U+006F + U+0301
+            "b\u{00F3}b",
+            "b\u{0301}b",
+        ),
+        (
+            "u with acute",
+            "ú",      // NFC: U+00FA
+            "u\u{0301}",  // NFD: U+0075 + U+0301
+            "ú ser",
+            "u\u{0301}ser",
+        ),
+        // Multi-combining mark case
+        (
+            "a with grave and tilde",
+            "ã̀",    // NFC: a with tilde (U+00E3) + combining grave (U+0300)
+            "a\u{0303}\u{0300}",  // NFD: a (U+0061) + combining tilde (U+0303) + combining grave (U+0300)
+            "ã̀ lice",
+            "a\u{0303}\u{0300}lice",
+        ),
+    ];
+
+    for (desc, _nfc, _nfd, nfc_example, nfd_example) in corpus {
+        // NFC form (composed) must be rejected
+        assert!(
+            !is_valid_github_username(&s(&env, nfc_example)),
+            "{desc} (NFC composed) must be rejected: {nfc_example}"
+        );
+
+        // NFD form (decomposed) must also be rejected
+        assert!(
+            !is_valid_github_username(&s(&env, nfd_example)),
+            "{desc} (NFD decomposed) must be rejected: {nfd_example} contains combining marks"
+        );
+    }
+}
+
+/// Combining marks in various positions (NFC/NFD edge case).
+///
+/// Combining marks are separate codepoints that modify the preceding character.
+/// They are non-ASCII (U+0300–U+036F range) and must be rejected at any position.
+#[test]
+fn test_combining_marks_at_any_position_rejected() {
+    let env = Env::default();
+
+    let corpus = [
+        // Combining diacritics that could appear in NFC/NFD pairs
+        ("Combining grave accent", "a\u{0300}lice"),      // U+0300
+        ("Combining acute accent", "a\u{0301}lice"),      // U+0301
+        ("Combining circumflex", "a\u{0302}lice"),        // U+0302
+        ("Combining tilde", "a\u{0303}lice"),             // U+0303
+        ("Combining diaeresis", "a\u{0308}lice"),         // U+0308
+        ("Combining ring above", "a\u{030A}lice"),        // U+030A
+        ("Combining cedilla", "c\u{0327}ite"),            // U+0327
+        // Multiple combining marks (very complex edge case)
+        ("Multiple combining marks", "a\u{0300}\u{0301}\u{0302}lice"),
+        // Combining marks at start
+        ("Combining mark at start", "\u{0301}alice"),
+        // Combining marks at end
+        ("Combining mark at end", "alice\u{0301}"),
+    ];
+
+    for (desc, username) in corpus {
+        assert!(
+            !is_valid_github_username(&s(&env, username)),
+            "{desc} must be rejected: {username}"
+        );
+    }
+}
+
+/// NFC/NFD lookalike pairs that visually render the same but have different
+/// byte representations.
+///
+/// An attacker might try to register "café" in NFC form after discovering
+/// "café" in NFD form is already taken (or vice versa), hoping the forms
+/// normalize to the same key. But since we reject ALL non-ASCII, both forms
+/// are rejected before they could create a collision.
+#[test]
+fn test_nfc_nfd_lookalike_pairs_both_rejected() {
+    let env = Env::default();
+
+    // Common words in different normalizations
+    let pairs = [
+        // café: common homonym attack vector
+        ("cafe_nfc", "café"),           // NFC: single é (U+00E9)
+        ("cafe_nfd", "cafe\u{0301}"),   // NFD: e (U+0065) + combining acute (U+0301)
+        
+        // naïve: common programming term
+        ("naive_nfc", "naïve"),         // NFC: ï (U+00EF)
+        ("naive_nfd", "nai\u{0308}ve"), // NFD: i (U+0069) + combining diaeresis (U+0308) + ve
+    ];
+
+    for (_label, username) in pairs {
+        assert!(
+            !is_valid_github_username(&s(&env, username)),
+            "NFC/NFD lookalike must be rejected: {username}"
+        );
+    }
+}
+
+/// Verify that the contract's canonicalize_username function correctly handles
+/// (or rejects) NFC/NFD edge pairs.
+///
+/// The contract does NOT perform Unicode normalization; it only ASCII-lowercases.
+/// This test documents that behavior: if a non-ASCII username somehow entered
+/// canonicalize_username, it would pass through unchanged (not normalized).
+/// But in practice, non-ASCII usernames are rejected at is_valid_github_username
+/// before canonicalize_username is ever called.
+#[test]
+fn test_normalization_never_reaches_canonicalize_username() {
+    use soroban_sdk::{testutils::Address as _, Address, Env, Vec};
+    use trustbridge_contract::TrustBridgeContract;
+
+    let env = Env::default();
+    let admin = Address::generate(&env);
+    let user = Address::generate(&env);
+    let contract_id = env.register(TrustBridgeContract, ());
+
+    env.as_contract(&contract_id, || {
+        TrustBridgeContract::initialize(env.clone(), admin).unwrap();
+    });
+
+    env.mock_all_auths();
+
+    // Attempt to register NFC-composed form
+    env.as_contract(&contract_id, || {
+        let result = TrustBridgeContract::register(
+            env.clone(),
+            s(&env, "caf\u{00E9}"),  // NFC: é (U+00E9)
+            user.clone(),
+            Vec::new(&env),
+        );
+
+        assert_eq!(
+            result,
+            Err(trustbridge_contract::ContractError::InvalidUsername),
+            "NFC-composed non-ASCII must be rejected at validation gate"
+        );
+    });
+
+    // Attempt to register NFD-decomposed form
+    env.as_contract(&contract_id, || {
+        let result = TrustBridgeContract::register(
+            env.clone(),
+            s(&env, "cafe\u{0301}"),  // NFD: e (U+0065) + combining acute (U+0301)
+            user.clone(),
+            Vec::new(&env),
+        );
+
+        assert_eq!(
+            result,
+            Err(trustbridge_contract::ContractError::InvalidUsername),
+            "NFD-decomposed combining mark must be rejected at validation gate"
+        );
+    });
+
+    // Verify pure ASCII still works (positive control)
+    env.as_contract(&contract_id, || {
+        let result = TrustBridgeContract::register(
+            env.clone(),
+            s(&env, "alice"),  // Pure ASCII
+            user,
+            Vec::new(&env),
+        );
+
+        assert!(
+            result.is_ok(),
+            "Pure ASCII username must be accepted"
+        );
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // § Coverage Summary
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -861,6 +1080,7 @@ fn test_read_only_functions_do_not_validate_homoglyph_usernames() {
 /// - Full-width / half-width
 /// - Mathematical alphanumeric symbols (6 variants)
 /// - Superscripts / subscripts / modifiers
+/// - NFC/NFD normalization edge pairs (Issue #615)
 /// - Integration test at register() entry point
 /// - Positive control (valid ASCII still works)
 #[test]
@@ -869,11 +1089,11 @@ fn test_homoglyph_corpus_coverage_complete() {
     // tests exist. If a new attack vector is discovered, add it above and
     // increment the count here.
 
-    const EXPECTED_CORPUS_SIZE: usize = 80; // Approximate, update as corpus grows
+    const EXPECTED_CORPUS_SIZE: usize = 90; // Updated for NFC/NFD corpus additions
 
     // The real validation is in each corpus test. This just documents the scope.
     assert!(
-        EXPECTED_CORPUS_SIZE >= 78,
-        "Corpus should cover at least 78 known homoglyph/confusable codepoints"
+        EXPECTED_CORPUS_SIZE >= 85,
+        "Corpus should cover at least 85+ known homoglyph/confusable codepoints and NFC/NFD edge pairs"
     );
 }

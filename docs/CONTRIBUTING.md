@@ -467,6 +467,32 @@ minimum in `test_homoglyph_corpus_coverage_complete` as needed. Do not normalize
 or permit a new character as a local exception; changes to the ASCII-only
 policy require an explicit security review.
 
+### Normalization Policy (Issue #615)
+
+The contract performs **no Unicode normalization** on usernames — not NFC (composed form),
+not NFD (decomposed form), and not NFKC/NFKD (compatibility forms). It validates at the
+byte level: every byte must be ASCII (< 0x80). This means:
+
+- `café` in NFC form (é as single U+00E9) → rejected as non-ASCII
+- `café` in NFD form (e + combining acute U+0301) → rejected as non-ASCII
+- Both forms contain bytes ≥ 0x80 and fail the ASCII-only guard
+
+**Why no normalization:**
+- GitHub usernames are ASCII-only; normalization would decouple our validation from GitHub's rules.
+- Adding canonicalization increases attack surface (normalization edge cases, combining-mark handling).
+- The byte-level guard is simpler, faster, and sufficient: any non-ASCII is rejected outright.
+
+**When adding NFC/NFD test cases:**
+1. Add both NFC and NFD forms to `test_nfc_nfd_normalization_edge_pairs_rejected` or a new corpus test.
+2. Document the Unicode codepoints (e.g., U+00E9 for é, U+0301 for combining acute).
+3. Verify combining marks are tested at all positions (prefix, middle, end).
+4. Update `test_homoglyph_corpus_coverage_complete` count.
+5. Reference Issue #615 in SECURITY.md if describing a new category.
+
+**If a bypass is reported:** Confirm it is byte-level non-ASCII. If someone claims a
+normalization gap, audit whether the input truly bypasses the ASCII check; most cases
+involve combining marks (U+0300–U+036F range, all > 0x7F).
+
 Run the dedicated test before submitting changes:
 
 ```bash

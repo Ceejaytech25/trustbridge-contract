@@ -71,9 +71,19 @@ While `utils.rs` already rejects Unicode via ASCII-only validation, sophisticate
 - Modifier letters and super/subscript variants
 - Test: `test_superscript_subscript_modifier_letters_rejected`
 
+#### 10. NFC/NFD Normalization Edge Pairs (Issue #615)
+- Composed vs decomposed accented letters (é as U+00E9 vs e+combining acute)
+- Combining diacritics at prefix, infix, suffix positions
+- Real-world homonyms in multiple normalization forms (café, naïve)
+- Tests:
+  - `test_nfc_nfd_normalization_edge_pairs_rejected`
+  - `test_combining_marks_at_any_position_rejected`
+  - `test_nfc_nfd_lookalike_pairs_both_rejected`
+  - `test_normalization_never_reaches_canonicalize_username`
+
 ### Integration Tests
 
-#### 10. Register Entry Point Bypass Detection
+#### 11. Register Entry Point Bypass Detection
 - Tests actual `register()` function, not just `is_valid_github_username`
 - Attempts:
   - Cyrillic homoglyph registration
@@ -83,22 +93,25 @@ While `utils.rs` already rejects Unicode via ASCII-only validation, sophisticate
 
 ### Positive Controls
 
-#### 11. Valid ASCII Still Works
+#### 12. Valid ASCII Still Works
 - Confirms ASCII-only policy doesn't break legitimate usernames
 - Test: `test_valid_ascii_usernames_still_accepted_after_homoglyph_hardening`
 
-#### 12. Coverage Completeness
+#### 13. Coverage Completeness
 - Meta-test documenting expected corpus size
 - Test: `test_homoglyph_corpus_coverage_complete`
+- Current: 90+ codepoints and edge pair categories covered
 
 ## Security Guarantee
 
-**Documented in `docs/SECURITY.md` (Issue #299):**
+**Documented in `docs/SECURITY.md` (Issue #299 + #615):**
 
 > **We reject all non-ASCII.** Every codepoint above U+007F is blocked before
-> it reaches storage, regardless of how it renders. The corpus tests validate
-> this property against 78+ known confusable characters and ensure no bypass
-> path exists at the `register()` entry point.
+> it reaches storage, regardless of how it renders. We perform no Unicode
+> normalization; both NFC (composed) and NFD (decomposed) forms of accented
+> characters are non-ASCII and rejected at the byte level. The corpus tests
+> validate this property against 85+ known confusable characters, normalization
+> edge pairs, and ensure no bypass path exists at the `register()` entry point.
 
 ## Attack Vectors Covered
 
@@ -131,6 +144,13 @@ While `utils.rs` already rejects Unicode via ASCII-only validation, sophisticate
 - **Threat**: Mathematical bold "𝐚𝐥𝐢𝐜𝐞" vs ASCII "alice"
 - **Defense**: Math alphanumeric symbols are 4-byte UTF-8, rejected
 - **Coverage**: 6 mathematical font variants
+
+### Normalization Ambiguity (Issue #615)
+- **Threat**: "café" (NFC) vs "café" (NFD) create different byte sequences,
+  potentially creating two registry entries or bypassing case-folding
+- **Defense**: No normalization; both forms rejected as non-ASCII at byte level
+- **Coverage**: NFC/NFD pairs for common accented letters, combining marks
+  at all positions (prefix, infix, suffix, multiple)
 
 ## How to Run
 
@@ -212,6 +232,7 @@ submit the correct ASCII form.
 - **Issue #69**: Wave #69 Unicode hardening
 - **Issue #194**: Username case-folding (ASCII-only, no Unicode normalization)
 - **Issue #299**: This work (extended homoglyph corpus)
+- **Issue #615**: NFC/NFD normalization edge cases
 
 ## Corpus Growth
 

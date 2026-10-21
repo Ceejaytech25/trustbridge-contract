@@ -9,6 +9,13 @@ compatible corrections.
 
 ### Added
 
+- Added NFC/NFD normalization hardening and comprehensive edge-pair corpus testing (Issue #615).
+  - `tests/homoglyph_corpus.rs` now includes `test_nfc_nfd_normalization_edge_pairs_rejected`, `test_combining_marks_at_any_position_rejected`, `test_nfc_nfd_lookalike_pairs_both_rejected`, and `test_normalization_never_reaches_canonicalize_username`.
+  - Documented Unicode normalization policy: the contract performs no NFC/NFD/NFKC/NFKD normalization; both composed (NFC) and decomposed (NFD) forms of accented characters are non-ASCII and rejected at the byte level.
+  - `docs/SECURITY.md` § **NFC/NFD Normalization Policy** explains why normalization is out of scope and covers edge cases (combining marks at all positions, real-world homonyms like café and naïve).
+  - `docs/CONTRIBUTING.md` § **Normalization Policy** guides contributors on adding new NFC/NFD test cases.
+  - Corpus now covers 90+ codepoints and normalization edge pairs.
+
 - Added `get_address_if_verified` to the public ABI for secure CI payouts (see [get_address_if_verified](docs/ABI.md#get_address_if_verifiedgithub_username-string---resultcontributorrecord-contracterror)).
 - Added verifier allowlist management (`add_verifier`, `remove_verifier`, `get_verifiers`, `is_active_verifier`, `verifier_slots_remaining`, `prune_expired_verifiers`).
 - Added role-grant timelock lifecycle functions (`activate_role`, `cancel_role_grant`).

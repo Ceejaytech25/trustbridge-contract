@@ -556,38 +556,55 @@ These tests confirm that every form of non-ASCII input — whether a visually
 distinct character like an emoji or a deceptive homoglyph like Cyrillic 'а' —
 is caught and rejected, while every valid ASCII username shape remains accepted.
 
-### Extended homoglyph corpus (Issue #299)
+### NFC/NFD Normalization Policy (Issue #615)
 
-Beyond the baseline homoglyph tests in `src/utils.rs`, `tests/homoglyph_corpus.rs`
-provides an exhaustive test corpus covering additional confusable attack vectors:
+Unicode allows multiple byte representations of visually identical characters through
+normalization forms:
 
-**Comprehensive lookalike coverage:**
-- **Cyrillic**: 23 homoglyphs including а, е, о, р, с, х, у (U+0430–U+0443)
-- **Greek**: 20 homoglyphs including α, ο, ν, ρ, τ (U+03B1–U+03C7)
-- **Latin extended**: 16 diacritic variants (á, é, ñ, ü, ç, etc.)
+- **NFC (Canonical Decomposition, followed by Canonical Composition)**: Single composed characters.
+  Example: `é` as a single codepoint U+00E9.
+- **NFD (Canonical Decomposition)**: Separate base character + combining marks.
+  Example: `é` as U+0065 (e) + U+0301 (combining acute accent).
 
-**Invisible characters:**
-- Zero-width joiner (U+200D), zero-width non-joiner (U+200C)
-- Zero-width space (U+200B), word joiner (U+2060)
-- Soft hyphen (U+00AD), invisible operators (U+2061–U+2063)
+**Policy: The contract performs NO Unicode normalization.** It validates at the
+byte level (ASCII-only), which means both NFC and NFD forms are treated as
+distinct sequences:
 
-**Bidirectional text attacks:**
-- Left-to-right / right-to-left marks (U+200E, U+200F)
-- Bidi embedding and override controls (U+202A–U+202E)
-- Directional isolates (U+2066–U+2069)
+| Form | Bytes | Result |
+|------|-------|--------|
+| ASCII `cafe` | `[0x63, 0x61, 0x66, 0x65]` | ✅ Accepted |
+| NFC `café` | `[0x63, 0x61, 0x66, 0xC3, 0xA9]` | ❌ Rejected (0xC3, 0xA9 > 0x7F) |
+| NFD `cafe´` | `[0x63, 0x61, 0x66, 0x65, 0xCC, 0x81]` | ❌ Rejected (0xCC, 0x81 > 0x7F) |
 
-**Advanced confusables:**
-- Full-width Latin forms (U+FF21–U+FF5A, used in Japanese text)
-- Mathematical alphanumeric symbols (U+1D400–U+1D7FF, bold/italic/script variants)
-- Superscripts, subscripts, and modifier letters
+**Why:** GitHub usernames are ASCII-only. Any username containing combining marks
+(whether as part of a composed character or as separate combining diacritics) is
+invalid on GitHub itself. Attempting to normalize and accept such input would
+create a canonicalization attack surface and decouple our validation from
+GitHub's actual rules.
 
-**Documented guarantee:** "We reject all non-ASCII." Every codepoint above U+007F
-is blocked before it reaches storage, regardless of how it renders. The corpus
-tests validate this property against 78+ known confusable characters and ensure
-no bypass path exists at the `register()` entry point.
+**Edge cases covered:**
 
-Run the full corpus: `cargo test homoglyph` or `cargo test unicode`
-(CI: the `homoglyph_corpus` job runs `cargo test --test homoglyph_corpus` on every pull request).
+- **Composed accented letters** (NFC): All non-ASCII, rejected by the ASCII byte check.
+- **Decomposed combining marks** (NFD): All combining marks (U+0300–U+036F) are non-ASCII,
+  rejected at any position (prefix, infix, suffix, or multiple).
+- **Mixed normalization:** Usernames with characters in different normalization states
+  are still rejected because at least one character will be non-ASCII.
+- **NFC/NFD lookalike pairs:** Because we don't normalize, "café" (NFC) and "cafe´" (NFD)
+  would normally be distinct keys. But both are rejected at validation, so no collision
+  risk exists.
+
+**Test coverage** (Issue #615):
+
+- `test_nfc_nfd_normalization_edge_pairs_rejected` — NFC vs NFD forms of common accented letters
+- `test_combining_marks_at_any_position_rejected` — Combining diacritics at start, middle, end
+- `test_nfc_nfd_lookalike_pairs_both_rejected` — Real-world homonyms (café, naïve) in both forms
+- `test_normalization_never_reaches_canonicalize_username` — Confirms validation rejects non-ASCII
+  before the canonicalize step is ever called
+
+**For off-chain integrations:** If a dashboard or indexer normalizes usernames
+(e.g., NFC) before submission or comparison, it must document that choice. The
+on-chain validation is a guard against raw user input; it does not validate that
+input was pre-normalized.
 
 ### Performance
 
